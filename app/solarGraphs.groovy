@@ -1,5 +1,5 @@
 /************************************************************************************************
-|	Application Name: NST Graphs								|
+|	Application Name: Solar Graphs								|
 |	Copyright (C) 2019									|
 |	Authors: Eric S. (@E_sch)					|
 |												|
@@ -291,11 +291,15 @@ def scheduleAutomationEval(schedtime = defaultAutomationTime()) {
 		def t0 = state?.evalSchedLastTime
 		if(t0 == null) { t0 = 0 }
 		def timeLeftPrev = t0 - getAutoRunInSec()
+		if(timeLeftPrev < 0) { timeLeftPrev = 100 }
 		def str1 = " Schedule change: from (${timeLeftPrev}sec) to (${theTime}sec)"
 		if(timeLeftPrev > (theTime + 5) || waitOverride) {
 			if(Math.abs(timeLeftPrev - theTime) > 3) {
 				runIn(theTime, "runAutomationEval", [overwrite: true])
 				LogTrace("${str}Performing${str1}")
+				state?.autoRunInSchedDt = getDtNow()
+				state.evalSched = true
+				state.evalSchedLastTime = theTime
 			}
 		} else { LogTrace("${str}Skipping${str1}") }
 	}
