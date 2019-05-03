@@ -1,8 +1,8 @@
 /************************************************************************************************
 |	Application Name: Solar Graphs								|
 |	Copyright (C) 2019									|
-|	Authors: Eric S. (@E_sch)					|
-|												|
+|	Authors: Eric S. (@E_sch)								|
+| Modified May 3, 2019										|
 |************************************************************************************************/
 
 import groovy.json.*
@@ -21,7 +21,7 @@ definition(
 	iconX3Url: "",
 	oauth: true)
 
-def appVersion() { "0.0.1" }
+def appVersion() { "0.0.2" }
 
 preferences {
 	page(name: "startPage")
@@ -53,7 +53,8 @@ def mainAutoPage() {
 					input "energyDevice", "capability.energyMeter", title: imgTitle(getAppImg("lightning.png"), inputTitleStr("Envoy Device?")), required: true, multiple: false, submitOnChange: true
                                         if(energyDevice) {
 						def myUrl = getAppEndpointUrl("deviceTiles")
-						def myStr = """ Graph Url: <a href="${myUrl}" target="_blank">${energyDevice.name}</a> """
+						def myLUrl = getLocalEndpointUrl("deviceTiles")
+						def myStr = """ Graph Url: <a href="${myUrl}" target="_blank">${energyDevice.name}</a>  <a href="${myLUrl}" target="_blank">(local)</a> """
 						paragraph imgTitle(getAppImg("graph_icon.png"), paraTitleStr(myStr))
 					}
 				}
@@ -643,7 +644,7 @@ LogTrace("renderDeviceTiles: ${dev.id} ${dev.name} ${theDev?.name}  ${dev.typeNa
 					\$("#goHomeBtn").click(function() {
 						closeNavMenu();
 						toggleMenuBtn();
-						window.location.replace('${getAppEndpointUrl("deviceTiles")}');
+						window.location.replace('${request?.requestSource == "local" ? getLocalEndpointUrl("deviceTiles") : getAppEndpointUrl("deviceTiles")}');
 					});
 				</script>
 			</body>
@@ -845,8 +846,8 @@ def getWebHeaderHtml(title, clipboard=true, vex=false, swiper=false, charts=fals
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/hamburgers/0.9.1/hamburgers.min.css">
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 		<script type="text/javascript">
-			const serverUrl = '${apiServerUrl('')}';
-			const cmdUrl = '${getAppEndpointUrl('deviceTiles')}';
+			const serverUrl = '${request?.requestSource == "local" ? getLocalApiServerUrl() : apiServerUrl()}';
+			const cmdUrl = '${request?.requestSource == "local" ? getLocalEndpointUrl('deviceTiles') : getAppEndpointUrl('deviceTiles')}';
 		</script>
 	"""
 	html += clipboard ? """<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>""" : ""
