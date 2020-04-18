@@ -2,7 +2,7 @@
 |	Application Name: Solar Graphs								|
 |	Copyright (C) 2019									|
 |	Authors: Eric S. (@E_sch)								|
-| Modified May 3, 2019										|
+| Modified April 17, 2020									|
 |************************************************************************************************/
 
 import groovy.json.*
@@ -21,7 +21,7 @@ definition(
 	iconX3Url: "",
 	oauth: true)
 
-def appVersion() { "0.0.2" }
+static String appVersion() { "0.0.3" }
 
 preferences {
 	page(name: "startPage")
@@ -34,8 +34,8 @@ mappings {
 
 def startPage() {
 	log.info "startPage"
-	if(!state?.access_token) { getAccessToken() }
-	if(!state?.access_token) { enableOauth(); getAccessToken() }
+	if(!state?.access_token) { Boolean a=getAccessToken() }
+	if(!state?.access_token) { enableOauth(); Boolean a=getAccessToken() }
 	mainAutoPage()
 }
 
@@ -51,10 +51,10 @@ def mainAutoPage() {
 				}
 				if(!getIsAutomationDisabled()) {
 					input "energyDevice", "capability.energyMeter", title: imgTitle(getAppImg("lightning.png"), inputTitleStr("Envoy Device?")), required: true, multiple: false, submitOnChange: true
-                                        if(energyDevice) {
-						def myUrl = getAppEndpointUrl("deviceTiles")
-						def myLUrl = getLocalEndpointUrl("deviceTiles")
-						def myStr = """ Graph Url: <a href="${myUrl}" target="_blank">${energyDevice.name}</a>  <a href="${myLUrl}" target="_blank">(local)</a> """
+					if(energyDevice) {
+						String myUrl = getAppEndpointUrl("deviceTiles")
+						String myLUrl = getLocalEndpointUrl("deviceTiles")
+						String myStr = """ Graph Url: <a href="${myUrl}" target="_blank">${energyDevice.label}</a>  <a href="${myLUrl}" target="_blank">(local)</a> """
 						paragraph imgTitle(getAppImg("graph_icon.png"), paraTitleStr(myStr))
 					}
 				}
@@ -81,31 +81,29 @@ def mainAutoPage() {
 		}
 }
 
-private isHubitat(){
+Boolean isHubitat(){
 	return hubUID != null
 }
 
-def installed() {
+void installed() {
 	log.debug "${app.getLabel()} Installed with settings: ${settings}"		// MUST BE log.debug
 	if(isHubitat() && !app.id) return
 	initialize()
-	return true
 }
 
-def updated() {
+void updated() {
 	log.debug "${app.getLabel()} Updated...with settings: ${settings}"
 	state?.isInstalled = true
 	initialize()
 	state?.lastUpdatedDt = getDtNow()
-	return true
 }
 
-def uninstalled() {
+void uninstalled() {
 	log.debug "uninstalled"
 	uninstAutomationApp()
 }
 
-def initialize() {
+void initialize() {
 	log.debug "${app.label} Initialize..."		// Must be log.debug
 	if(!state?.autoTyp) { state.autoTyp = "chart" }
 	resetVars()
@@ -114,7 +112,7 @@ def initialize() {
 	runIn(6, "initAutoApp", [overwrite: true])
 }
 
-def resetVars() {
+void resetVars() {
 	stateRemove("evalSched")
 	stateRemove("autoRunInSchedDt")
 	stateRemove("detailEventHistory")
@@ -152,37 +150,37 @@ def initAutoApp() {
 
 	//revokeAccessToken()
 
-	def devTilesUrl = getAppEndpointUrl("deviceTiles")
+	String devTilesUrl = getAppEndpointUrl("deviceTiles")
 
 	Logger("initAutoApp: devTile: ${devTilesUrl}")
 }
 
-def subscribeToEvents() {
+void subscribeToEvents() {
 	if(settings?.energyDevice) {
 		subscribe(energyDevice, "energy", automationGenericEvt)
 		subscribe(energyDevice, "power", automationGenericEvt)
 	}
 }
 
-def scheduler() {
+void scheduler() {
 }
 
-def uninstAutomationApp() {
+void uninstAutomationApp() {
 }
 
-def strCapitalize(str) {
-	return str ? str?.toString().capitalize() : null
+static String strCapitalize(String str) {
+	return str ? str?.capitalize() : (String)null
 }
 
-def automationGenericEvt(evt) {
-	def startTime = now()
-	def eventDelay = startTime - evt.date.getTime()
-	LogTrace("${evt?.name.toUpperCase()} Event | Device: ${evt?.displayName} | Value: (${strCapitalize(evt?.value)}) with a delay of ${eventDelay}ms")
+void automationGenericEvt(evt) {
+	Long startTime = now()
+	Long eventDelay = startTime - evt.date.getTime()
+	LogTrace("${evt.name.toUpperCase()} Event | Device: ${evt?.displayName} | Value: (${strCapitalize(evt?.value)}) with a delay of ${eventDelay}ms".toString())
 
 	doTheEvent(evt)
 }
 
-def doTheEvent(evt) {
+void doTheEvent(evt) {
 	if(getIsAutomationDisabled()) { return }
 	else {
 		scheduleAutomationEval()
@@ -190,60 +188,60 @@ def doTheEvent(evt) {
 	}
 }
 
-def storeLastEventData(evt) {
+void storeLastEventData(evt) {
 	if(evt) {
-		def newVal = ["name":evt.name, "displayName":evt.displayName, "value":evt.value, "date":formatDt(evt.date), "unit":evt.unit]
+		Map newVal = ["name":evt.name, "displayName":evt.displayName, "value":evt.value, "date":formatDt((Date)evt.date), "unit":evt.unit]
 		state?.lastEventData = newVal
 		//log.debug "LastEvent: ${state?.lastEventData}"
 
-		def list = state?.detailEventHistory ?: []
-		def listSize = 15
+		List list = state?.detailEventHistory ?: []
+		Integer listSize = 15
 		if(list?.size() < listSize) {
-			list.push(newVal)
+			Boolean a=list.push(newVal)
 		}
 		else if(list?.size() > listSize) {
-			def nSz = (list?.size()-listSize) + 1
-			def nList = list?.drop(nSz)
-			nList?.push(newVal)
+			Integer nSz = (list?.size()-listSize) + 1
+			List nList = list?.drop(nSz)
+			Boolean a=nList?.push(newVal)
 			list = nList
 		}
 		else if(list?.size() == listSize) {
-			def nList = list?.drop(1)
-			nList?.push(newVal)
+			List nList = list?.drop(1)
+			Boolean a=nList?.push(newVal)
 			list = nList
 		}
-		if(list) { state?.detailEventHistory = list }
+		if(list) { state.detailEventHistory = list }
 	}
 }
 
-def storeExecutionHistory(val, method = null) {
+def storeExecutionHistory(val, String method = (String)null) {
 	//log.debug "storeExecutionHistory($val, $method)"
 	if(method) {
 		LogAction("${method} Execution Time: (${val} milliseconds)", "trace", false)
 	}
-	def list = state?.detailExecutionHistory ?: []
-	def listSize = 30
+	List list = state?.detailExecutionHistory ?: []
+	Integer listSize = 30
 	list = addToList([val, method, getDtNow()], list, listSize)
 	if(list) { state?.detailExecutionHistory = list }
 }
 
-def addToList(val, list, listSize) {
+static List addToList(val, List list, Integer listSize) {
 	if(list?.size() < listSize) {
-		list.push(val)
+		Boolean a=list.push(val)
 	} else if(list?.size() > listSize) {
-		def nSz = (list?.size()-listSize) + 1
-		def nList = list?.drop(nSz)
-		nList?.push(val)
+		Integer nSz = (list?.size()-listSize) + 1
+		List nList = list?.drop(nSz)
+		Boolean a=nList?.push(val)
 		list = nList
 	} else if(list?.size() == listSize) {
-		def nList = list?.drop(1)
-		nList?.push(val)
+		List nList = list?.drop(1)
+		Boolean a=nList?.push(val)
 		list = nList
 	}
 	return list
 }
 
-def setAutomationStatus(upd=false) {
+void setAutomationStatus(Boolean upd=false) {
 	Boolean myDis = (settings?.autoDisabledreq == true)
 	if(!getIsAutomationDisabled() && myDis) {
 		LogAction("Automation Disabled at (${getDtNow()})", "info", true)
@@ -256,25 +254,25 @@ def setAutomationStatus(upd=false) {
 	if(upd) { app.update() }
 }
 
-def defaultAutomationTime() {
+static Integer defaultAutomationTime() {
 	return 5
 }
 
-def scheduleAutomationEval(schedtime = defaultAutomationTime()) {
-	def theTime = schedtime
+void scheduleAutomationEval(Integer schedtime = defaultAutomationTime()) {
+	Integer theTime = schedtime
 	if(theTime < defaultAutomationTime()) { theTime = defaultAutomationTime() }
-	def autoType = getAutoType()
+	String autoType = getAutoType()
 	def random = new Random()
-	def random_int = random.nextInt(6)  // this randomizes a bunch of automations firing at same time off same event
-	def waitOverride = false
+	Integer random_int = random.nextInt(6)  // this randomizes a bunch of automations firing at same time off same event
+	Boolean waitOverride = false
 	switch(autoType) {
 		case "chart":
 			if(theTime == defaultAutomationTime()) {
 				theTime += random_int
 			}
-			def schWaitVal = settings?.schMotWaitVal?.toInteger() ?: 60
+			Integer schWaitVal = settings?.schMotWaitVal?.toInteger() ?: 60
 			if(schWaitVal > 120) { schWaitVal = 120 }
-			def t0 = getAutoRunSec()
+			Integer t0 = getAutoRunSec()
 			if((schWaitVal - t0) >= theTime ) {
 				theTime = (schWaitVal - t0)
 				waitOverride = true
@@ -282,45 +280,45 @@ def scheduleAutomationEval(schedtime = defaultAutomationTime()) {
 			//theTime = Math.min( Math.max(theTime,defaultAutomationTime()), 120)
 			break
 	}
-	if(!state?.evalSched) {
+	if(!state.evalSched) {
 		runIn(theTime, "runAutomationEval", [overwrite: true])
-		state?.autoRunInSchedDt = getDtNow()
+		state.autoRunInSchedDt = getDtNow()
 		state.evalSched = true
 		state.evalSchedLastTime = theTime
 	} else {
-		def str = "scheduleAutomationEval: "
-		def t0 = state?.evalSchedLastTime
+		String str = "scheduleAutomationEval: "
+		Integer t0 = state.evalSchedLastTime
 		if(t0 == null) { t0 = 0 }
-		def timeLeftPrev = t0 - getAutoRunInSec()
+		Integer timeLeftPrev = t0 - getAutoRunInSec()
 		if(timeLeftPrev < 0) { timeLeftPrev = 100 }
-		def str1 = " Schedule change: from (${timeLeftPrev}sec) to (${theTime}sec)"
+		String str1 = " Schedule change: from (${timeLeftPrev}sec) to (${theTime}sec)"
 		if(timeLeftPrev > (theTime + 5) || waitOverride) {
 			if(Math.abs(timeLeftPrev - theTime) > 3) {
 				runIn(theTime, "runAutomationEval", [overwrite: true])
-				LogTrace("${str}Performing${str1}")
-				state?.autoRunInSchedDt = getDtNow()
+				LogTrace(str+'Performing'+str1)
+				state.autoRunInSchedDt = getDtNow()
 				state.evalSched = true
 				state.evalSchedLastTime = theTime
 			}
-		} else { LogTrace("${str}Skipping${str1}") }
+		} else { LogTrace(str+'Skipping'+str1) }
 	}
 }
 
-def getAutoRunSec() { return !state?.autoRunDt ? 100000 : GetTimeDiffSeconds(state?.autoRunDt, null, "getAutoRunSec").toInteger() }
+Integer getAutoRunSec() { return !state.autoRunDt ? 100000 : GetTimeDiffSeconds((String)state.autoRunDt, null, "getAutoRunSec").toInteger() }
 
-def getAutoRunInSec() { return !state?.autoRunInSchedDt ? 100000 : GetTimeDiffSeconds(state?.autoRunInSchedDt, null, "getAutoRunInSec").toInteger() }
+Integer getAutoRunInSec() { return !state.autoRunInSchedDt ? 100000 : GetTimeDiffSeconds((String)state.autoRunInSchedDt, null, "getAutoRunInSec").toInteger() }
 
-def runAutomationEval() {
+void runAutomationEval() {
 	LogTrace("runAutomationEval")
-	def execTime = now()
-	def autoType = getAutoType()
+	Long execTime = now()
+	String autoType = getAutoType()
 	state.evalSched = false
-	state?.evalSchedLastTime = null
-	state?.autoRunInSchedDt = null
+	state.evalSchedLastTime = null
+	state.autoRunInSchedDt = null
 	switch(autoType) {
 		case "chart":
-			if(settings?.energyDevice) {
-				getSomeData(settings?.energyDevice)
+			if(settings.energyDevice) {
+				getSomeData(settings.energyDevice)
 			}
 
 			break
@@ -331,19 +329,19 @@ def runAutomationEval() {
 	storeExecutionHistory((now()-execTime), "runAutomationEval")
 }
 
-def getCurAppLbl() { return app?.label?.toString() }
+String getCurAppLbl() { return (String)app.label }
 
-def appLabel()	{ return "Solar Graphs" }
-def appName()		{ return "${appLabel()}" }
+static String appLabel()	{ return "Solar Graphs" }
+static String appName()		{ return appLabel() }
 
-def getAutoTypeLabel() {
+String getAutoTypeLabel() {
 	//LogTrace("getAutoTypeLabel()")
-	def type = state?.autoTyp
-	def appLbl = getCurAppLbl()
-	def newName = appName() == "${appLabel()}" ? "NST Graphs" : "${appName()}"
-	def typeLabel = ""
+	String type = state?.autoTyp
+	String appLbl = getCurAppLbl()
+	String newName = appName() == appLabel() ? "NST Graphs" : appName()
+	String typeLabel = ""
 	def newLbl
-	def dis = (getIsAutomationDisabled() == true) ? "\n(Disabled)" : ""
+	String dis = getIsAutomationDisabled() ? "\n(Disabled)" : ""
 
 	typeLabel = "Solar Location ${location.name} Graphs"
 
@@ -358,11 +356,11 @@ def getAutoTypeLabel() {
 	} else {
 		newLbl = typeLabel
 	}
-	return "${newLbl}${dis}"
+	return newLbl+dis
 }
 
 //ERS
-def checkCleanups() {
+void checkCleanups() {
 	def inuse = []
 	theDev = settings?.energyDevice
 	if(theDev) {
@@ -372,15 +370,15 @@ def checkCleanups() {
 	def data = []
 	def regex1 = /Wtoday/
 	["Wtoday"]?.each { oi->
-		state?.each { if(it?.key?.toString().startsWith(oi)) {
-				data?.push(it?.key.replaceAll(regex1, ""))
+		state?.each { if(it.key.toString().startsWith(oi)) {
+				data?.push(it.key.replaceAll(regex1, ""))
 			} 
 		}
 	}
 	def regex2 = /thermStor/
 	["thermStor"]?.each { oi->
-		state?.each { if(it?.key?.toString().startsWith(oi)) {
-				data?.push(it?.key.replaceAll(regex2, ""))
+		state?.each { if(it.key.toString().startsWith(oi)) {
+				data?.push(it.key.replaceAll(regex2, ""))
 			} 
 		}
 	}
@@ -394,7 +392,7 @@ def checkCleanups() {
 	}
 }
 
-def cleanState(id) {
+void cleanState(id) {
 LogTrace("cleanState: ${id}")
 	stateRemove("Wtoday${id}")
 	stateRemove("WhumTblYest${id}")
@@ -420,12 +418,12 @@ LogTrace("cleanState: ${id}")
 	stateRemove("fanTbl${id}")
 }
 
-def sectionTitleStr(title)	{ return "<h3>$title</h3>" }
-def inputTitleStr(title)	{ return "<u>$title</u>" }
-def pageTitleStr(title)	 { return "<h1>$title</h1>" }
-def paraTitleStr(title)	 { return "<b>$title</b>" }
+static String sectionTitleStr(title)	{ return "<h3>$title</h3>" }
+static String inputTitleStr(title)	{ return "<u>$title</u>" }
+static String pageTitleStr(title)	 { return "<h1>$title</h1>" }
+static String paraTitleStr(title)	 { return "<b>$title</b>" }
 
-def imgTitle(imgSrc, titleStr, color=null, imgWidth=30, imgHeight=null) {
+String imgTitle(imgSrc, titleStr, color=null, imgWidth=30, imgHeight=null) {
 	def imgStyle = ""
 	imgStyle += imgWidth ? "width: ${imgWidth}px !important;" : ""
 	imgStyle += imgHeight ? "${imgWidth ? " " : ""}height: ${imgHeight}px !important;" : ""
@@ -433,7 +431,7 @@ def imgTitle(imgSrc, titleStr, color=null, imgWidth=30, imgHeight=null) {
 	else { return """<img style="${imgStyle}" src="${imgSrc}"> ${titleStr}</img>""" }
 }
 
-def icons(name, napp="App") {
+String icons(String name, String napp="App") {
 	def icon_names = [
 		"i_dt": "delay_time",
 		"i_not": "notification",
@@ -449,25 +447,25 @@ def icons(name, napp="App") {
 
 //ERS
 	]
-	def t0 = icon_names?."${name}"
+	String t0 = icon_names?."${name}"
 	//LogAction("t0 ${t0}", "warn", true)
-	if(t0) return "https://raw.githubusercontent.com/${gitPath()}/Images/$napp/${t0}_icon.png"
-	else return "https://raw.githubusercontent.com/${gitPath()}/Images/$napp/${name}"
+	if(t0) return "https://raw.githubusercontent.com/${gitPath()}/Images/$napp/${t0}_icon.png".toString()
+	else return "https://raw.githubusercontent.com/${gitPath()}/Images/$napp/${name}".toString()
 }
 
-def gitRepo()		{ return "tonesto7/nest-manager"}
-def gitBranch()		{ return "master" }
-def gitPath()		{ return "${gitRepo()}/${gitBranch()}"}
+static String gitRepo()		{ return "tonesto7/nest-manager"}
+static String gitBranch()		{ return "master" }
+static String gitPath()		{ return "${gitRepo()}/${gitBranch()}".toString()}
 
-def getAppImg(imgName, on = null) {
+String getAppImg(imgName, Boolean on=null) {
 	return (!disAppIcons || on) ? icons(imgName) : ""
 }
 
-def getDevImg(imgName, on = null) {
+String getDevImg(imgName, Boolean on=null) {
 	return (!disAppIcons || on) ? icons(imgName, "Devices") : ""
 }
 
-def logsOff() {
+void logsOff() {
 	log.warn "debug logging disabled..."
 	settingUpdate("showDebug", "false", "bool")
 	settingUpdate("advAppDebug", "false", "bool")
@@ -481,15 +479,15 @@ def getSettingsData() {
 	return sets
 }
 
-def getSettingVal(var) {
+def getSettingVal(String var) {
 	return settings[var] ?: null
 }
 
-def getStateVal(var) {
+def getStateVal(String var) {
 	return state[var] ?: null
 }
 
-void settingUpdate(name, value, type=null) {
+void settingUpdate(String name, value, String type=null) {
 	//LogTrace("settingUpdate($name, $value, $type)...")
 	if(name) {
 		if(value == "" || value == null || value == []) {
@@ -501,20 +499,19 @@ void settingUpdate(name, value, type=null) {
 	else if (name && type == null) { app?.updateSetting(name.toString(), value) }
 }
 
-void settingRemove(name) {
+void settingRemove(String name) {
 	//LogTrace("settingRemove($name)...")
 	if(name) { app?.clearSetting(name.toString()) }
 }
 
-def stateUpdate(key, value) {
-	if(key) { state?."${key}" = value; return true }
+def stateUpdate(String key, value) {
+	if(key) { state."${key}" = value; return true }
 	//else { LogAction("stateUpdate: null key $key $value", "error", true); return false }
 }
 
-def stateRemove(key) {
+void stateRemove(key) {
 	//if(state?.containsKey(key)) { state.remove(key?.toString()) }
 	state.remove(key?.toString())
-	return true
 }
 
 String getAutomationType() {
@@ -523,34 +520,34 @@ String getAutomationType() {
 
 String getAutoType() { return getAutomationType() }
 
-def getIsAutomationDisabled() {
-	def dis = state?.autoDisabled
-	return (dis != null && dis == true) ? true : false
+Boolean getIsAutomationDisabled() {
+	Boolean dis = state.autoDisabled
+	return (dis != null && dis)
 }
 
-def renderDeviceTiles(type=null, theDev=null) {
-		def devHtml = ""
-		def navHtml = ""
-		def scrStr = ""
+def renderDeviceTiles(String type=null, theDev=null) {
+		String devHtml = ""
+		String navHtml = ""
+		String scrStr = ""
 		def allDevices = []
 		if(theDev) {
 			allDevices << theDev
 		} else {
-			allDevices << settings?.energyDevice
+			allDevices << settings.energyDevice
 		}
 
 		def devices = allDevices
-		def devNum = 1
+		Integer devNum = 1
 		def myType = type ?: "Envoy Device"
-		devices?.sort {it?.getLabel()}.each { dev ->
+		devices.sort {it.getLabel()}.each { dev ->
 			def navMap = [:]
-			def hasHtml = true // (dev?.hasHtml() == true)
+			Boolean hasHtml = true // (dev?.hasHtml() == true)
 			if( (  (dev?.typeName in ["Enlighten Envoy (local)"]) &&
 				(hasHtml && !type) || (hasHtml && type && dev?.typeName == type)) ) {
 LogTrace("renderDeviceTiles: ${dev.id} ${dev.name} ${theDev?.name}  ${dev.typeName}")
 				navMap = ["key":dev?.getLabel(), "items":[]]
 				def navItems = navHtmlBuilder(navMap, devNum)
-				def myTile = getSDeviceTile(devNum, dev)
+				String myTile = getSDeviceTile(devNum, dev)
 				if(navItems?.html) { navHtml += navItems?.html }
 				if(navItems?.js) { scrStr += navItems?.js }
 
@@ -570,7 +567,7 @@ LogTrace("renderDeviceTiles: ${dev.id} ${dev.name} ${theDev?.name}  ${dev.typeNa
 			}
 		}
 
-		def html = """
+		String html = """
 		<html lang="en">
 			<head>
 				${getWebHeaderHtml(myType, true, true, true, true)}
@@ -653,22 +650,22 @@ LogTrace("renderDeviceTiles: ${dev.id} ${dev.name} ${theDev?.name}  ${dev.typeNa
 		render contentType: "text/html", data: html
 }
 
-def navHtmlBuilder(navMap, idNum) {
-	def res = [:]
-	def htmlStr = ""
-	def jsStr = ""
+Map navHtmlBuilder(navMap, idNum) {
+	Map res = [:]
+	String htmlStr = ""
+	String jsStr = ""
 	if(navMap?.key) {
 		htmlStr += """
 			<div class="nav-cont-bord-div nav-menu">
 			  <div class="nav-cont-div">
 				<li class="nav-key-item"><a id="nav-key-item${idNum}">${navMap?.key}<span class="icon"></span></a></li>"""
-		jsStr += navJsBuilder("nav-key-item${idNum}", "key-item${idNum}")
+		jsStr += navJsBuilder("nav-key-item${idNum}".toString(), "key-item${idNum}".toString())
 	}
 	if(navMap?.items) {
 		def nItems = navMap?.items
 		nItems?.each {
-			htmlStr += """\n<li class="nav-subkey-item"><a id="nav-subitem${idNum}-${it?.toString().toLowerCase()}">${it}<span class="icon"></span></a></li>"""
-			jsStr += navJsBuilder("nav-subitem${idNum}-${it?.toString().toLowerCase()}", "item${idNum}-${it?.toString().toLowerCase()}")
+			htmlStr += """\n<li class="nav-subkey-item"><a id="nav-subitem${idNum}-${it.toString().toLowerCase()}">${it}<span class="icon"></span></a></li>"""
+			jsStr += navJsBuilder("nav-subitem${idNum}-${it.toString().toLowerCase()}".toString(), "item${idNum}-${it.toString().toLowerCase()}".toString())
 		}
 	}
 	htmlStr += """\n		</div>
@@ -678,8 +675,8 @@ def navHtmlBuilder(navMap, idNum) {
 	return res
 }
 
-def navJsBuilder(btnId, divId) {
-	def res = """
+static String navJsBuilder(String btnId, String divId) {
+	String res = """
 			\$("#${btnId}").click(function() {
 				\$("html, body").animate({scrollTop: \$("#${divId}").offset().top - hdrHeight - 20},500);
 				closeNavMenu();
@@ -691,10 +688,10 @@ def navJsBuilder(btnId, divId) {
 
 
 
-def getSDeviceTile(devNum, dev) {
+String getSDeviceTile(Integer devNum, dev) {
 //Logger("W1")
-		def updateAvail = !state.updateAvailable ? "" : """<div class="greenAlertBanner">Device Update Available!</div>"""
-		def clientBl = state?.clientBl ? """<div class="brightRedAlertBanner">Your Manager client has been blacklisted!\nPlease contact the Nest Manager developer to get the issue resolved!!!</div>""" : ""
+		String updateAvail = !state.updateAvailable ? "" : """<div class="greenAlertBanner">Device Update Available!</div>"""
+		String clientBl = state?.clientBl ? """<div class="brightRedAlertBanner">Your Manager client has been blacklisted!\nPlease contact the Nest Manager developer to get the issue resolved!!!</div>""" : ""
 //Logger("W2")
 		def energyStr = dev.currentState("energy").value
 		def efficiencyToday = dev.currentState("efficiency").value
@@ -710,7 +707,7 @@ def getSDeviceTile(devNum, dev) {
 			//<h4 style="font-size: 22px; font-weight: bold; text-align: center; background: #00a1db; color: #f5f5f5;">Event History</h4>
 					//<h4 class="bottomBorder"> ${location.name} </h4>
 
-		def mainHtml = """
+		String mainHtml = """
 			<div class="device">
 				<div class="container">
 					<h4>Solar Conditions</h4>
@@ -750,9 +747,9 @@ def getSDeviceTile(devNum, dev) {
 //		render contentType: "text/html", data: mainHtml, status: 200
 }
 
-def historyGraphHtml(devNum="", dev) {
+String historyGraphHtml(Integer devNum, dev) {
 //Logger("HistoryG 1")
-	def html = ""
+	String html = ""
 	if(true) {
 //Logger("HistoryG 2")
 			html = """
@@ -823,8 +820,8 @@ def historyGraphHtml(devNum="", dev) {
 }
 
 
-def getWebHeaderHtml(title, clipboard=true, vex=false, swiper=false, charts=false) {
-	def html = """
+String getWebHeaderHtml(String title, Boolean clipboard=true, Boolean vex=false, Boolean swiper=false, Boolean charts=false) {
+	String html = """
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 		<meta name="description" content="Solar Charts">
@@ -862,8 +859,8 @@ def getWebHeaderHtml(title, clipboard=true, vex=false, swiper=false, charts=fals
 	return html
 }
 
-def hideChartHtml() {
-	def data = """
+String hideChartHtml() {
+	String data = """
 		<div class="swiper-slide">
 			<section class="sectionBg" style="min-height: 250px;">
 				<h3>Event History</h3>
@@ -879,8 +876,8 @@ def hideChartHtml() {
 }
 
 String getDataString(Integer seriesIndex) {
-	def dataString = ""
-	def dataTable = []
+	String dataString = ""
+	List dataTable = []
 	switch (seriesIndex) {
 		case 1:
 			dataTable = state.energyTableYesterday
@@ -904,8 +901,8 @@ String getDataString(Integer seriesIndex) {
 	return dataString
 }
 
-void getSomeData(dev, devpoll = false) {
-	LogTrace("getSomeData ${app} ${dev.label} ${dev.id}")
+void getSomeData(dev, Boolean devpoll = false) {
+//	LogTrace("getSomeData ${app} ${dev.label} ${dev.id}")
 
 	def energyToday =  dev.currentState("energy").value.toFloat()
 /*
@@ -913,28 +910,28 @@ void getSomeData(dev, devpoll = false) {
 	def energyLast7Days = dev.currentState("energy_last7days").value
 	def energyLife =  dev.currentState("energy_life").value
 */
-	def currentPower = dev.currentState("power").value.toInteger()
+	Integer currentPower = dev.currentState("power").value.toInteger()
 /*
 	def efficiencyToday = dev.currentState("efficiency").value
 	def efficiencyYesterday = dev.currentState("efficiency_yesterday").value
 	def efficiencyLast7Days = dev.currentState("efficiency_last7days").value
 	def efficiencyLifetime = dev.currentState("efficiency_lifetime")?.value
 */
-	def numInverters = dev.currentState("numInverters").value.toInteger()
-	def inverterSize = dev.currentState("inverterSize").value.toInteger()
-	def panelSize = dev.currentState("panelSize").value.toInteger()
+	Integer numInverters = dev.currentState("numInverters").value.toInteger()
+	Integer inverterSize = dev.currentState("inverterSize").value.toInteger()
+	Integer panelSize = dev.currentState("panelSize").value.toInteger()
 
 	state.maxPower = numInverters * inverterSize
 
-	def today = new Date()
-	def todayDay = today.format("dd",location.timeZone)
-	def hr = today.format("H", location.timeZone) as Integer
-	def mins = today.format("m", location.timeZone) as Integer
+	Date today = new Date()
+	String todayDay = today.format("dd",location.timeZone)
+	Integer hr = today.format("H", location.timeZone) as Integer
+	Integer mins = today.format("m", location.timeZone) as Integer
 
-	LogTrace("getSomeData: ${today} ${todayDay} ${dev.id}")
+//	LogTrace("getSomeData: ${today} ${todayDay} ${dev.id}")
 
-	def powerTable = state?.powerTable
-	def energyTable = state?.energyTable
+	List powerTable = state?.powerTable
+	List energyTable = state?.energyTable
 
       if (!state.today || state.today != todayDay) {
 		state.peakpower = currentPower
@@ -948,8 +945,8 @@ void getSomeData(dev, devpoll = false) {
 		state.lastPower = 0
 	}
 
-	def previousPower = state.lastPower != null ? state.lastPower : currentPower
-	def powerChange = currentPower - previousPower
+	Integer previousPower = state.lastPower != null ? state.lastPower : currentPower
+	Integer powerChange = currentPower - previousPower
 	state.lastPower = currentPower
 
 	if (state.peakpower <= currentPower) {
@@ -959,7 +956,7 @@ void getSomeData(dev, devpoll = false) {
 
 	// get power data for yesterday and today so we can create a graph
 	if (state.powerTableYesterday == null || state.energyTableYesterday == null || powerTable == null || energyTable == null) {
-		def startOfToday = timeToday("00:00", location.timeZone)
+		Date startOfToday = timeToday("00:00", location.timeZone)
 		def newValues
 		if (state.powerTableYesterday == null || state.energyTableYesterday == null) {
 			log.trace "Querying DB for yesterday's data…"
@@ -1032,54 +1029,54 @@ void getSomeData(dev, devpoll = false) {
 private cast(value, dataType) {
 	switch(dataType) {
 		case "number":
-			if (value == null) return (int) 0
+			if (value == null) return (Integer) 0
 			if (value instanceof String) {
 				if (value.isInteger())
 					return value.toInteger()
 				if (value.isFloat())
-					return (int) Math.floor(value.toFloat())
+					return (Integer) Math.floor(value.toFloat())
 				if (value in trueStrings)
-					return (int) 1
+					return (Integer) 1
 			}
-			def result = (int) 0
+			def result = (Integer) 0
 			try {
-				result = (int) value
+				result = (Integer) value
 			} catch(all) {
-				result = (int) 0
+				result = (Integer) 0
 			}
-			return result ? result : (int) 0
+			return result ? result : (Integer) 0
 		case "decimal":
-			if (value == null) return (float) 0
+			if (value == null) return (Float) 0
 			if (value instanceof String) {
 				if (value.isFloat())
-					return (float) value.toFloat()
+					return (Float) value.toFloat()
 				if (value.isInteger())
-					return (float) value.toInteger()
+					return (Float) value.toInteger()
 				if (value in trueStrings)
-					return (float) 1
+					return (Float) 1
 			}
-			def result = (float) 0
+			def result = (Float) 0
 			try {
-				result = (float) value
+				result = (Float) value
 			} catch(all) {
 			}
-			return result ? result : (float) 0
+			return result ? result : (Float) 0
 	}
 }
 
 
 //ERS
 
-def getAppEndpointUrl(subPath) { return "${getFullApiServerUrl()}${subPath ? "/${subPath}" : ""}?access_token=${state?.access_token}" }
-def getLocalEndpointUrl(subPath) { return "${getFullLocalApiServerUrl()}${subPath ? "/${subPath}" : ""}?access_token=${state?.access_token}" }
+String getAppEndpointUrl(String subPath) { return "${getFullApiServerUrl()}${subPath ? "/${subPath}" : ""}?access_token=${state.access_token}".toString() }
+String getLocalEndpointUrl(String subPath) { return "${getFullLocalApiServerUrl()}${subPath ? "/${subPath}" : ""}?access_token=${state.access_token}".toString() }
 
-def getAccessToken() {
+Boolean getAccessToken() {
 	try {
-		if(!state?.access_token) { state?.access_token = createAccessToken() }
-		else { return true }
+		if(!state.access_token) { state.access_token = createAccessToken() }
+		return true
 	}
 	catch (ex) {
-		def msg = "Error: OAuth is not Enabled for ${app?.name}!."
+		String msg = "Error: OAuth is not Enabled for ${app?.name}!."
 	//	sendPush(msg)
 		log.error "getAccessToken Exception ${ex?.message}"
 		LogAction("getAccessToken Exception | $msg", "warn", true)
@@ -1087,7 +1084,7 @@ def getAccessToken() {
 	}
 }
 
-def enableOauth() {
+void enableOauth() {
 	def params = [
 			uri: "http://localhost:8080/app/edit/update?_action_update=Update&oauthEnabled=true&id=${app.appTypeId}",
 			headers: ['Content-Type':'text/html;charset=utf-8']
@@ -1104,15 +1101,15 @@ def enableOauth() {
 void resetAppAccessToken() {
 	LogAction("Resetting getAppDebugDesc Access Token....", "info", true)
 	revokeAccessToken()
-	state?.access_token = null
+	state.access_token = null
 	if(getAccessToken()) {
 		LogAction("Reset App Access Token... Successful", "info", true)
 	//	settingUpdate("resetAppAccessToken", "false", "bool")
 	}
 }
 
-def addValue(table, hr, mins, val) {
-	def newTable = table
+static List addValue(List table, hr, mins, val) {
+	List newTable = table
 	if(table?.size() > 2) {
 		def last = table.last()[2]
 		def secondtolast = table[-2][2]
@@ -1124,19 +1121,19 @@ def addValue(table, hr, mins, val) {
 	return newTable
 }
 
-def getStartTime(tbl1, tbl2) {
-	def startTime = 24
-	LogTrace("tbl1: ${state?."tbl1"?.size()}   tbl2: ${state?."tbl2"?.size()} ")
-	if (state?."${tbl1}"?.size()) {
+Integer getStartTime(String tbl1, String tbl2) {
+	Integer startTime = 24
+	LogTrace("tbl1: ${state."tbl1"?.size()}   tbl2: ${state."tbl2"?.size()} ")
+	if (state."${tbl1}"?.size()) {
 		startTime = state."${tbl1}".min{it[0].toInteger()}[0].toInteger()
 	}
-	if (state?."${tbl2}"?.size()) {
+	if (state."${tbl2}"?.size()) {
 		startTime = Math.min(startTime, state."${tbl2}".min{it[0].toInteger()}[0].toInteger())
 	}
 	return startTime
 }
 
-def hideWeatherHtml() {
+static String hideWeatherHtml() {
 	def data = """
 		<br></br><br></br>
 		<h3 style="font-size: 22px; font-weight: bold; text-align: center; background: #00a1db; color: #f5f5f5;">The Required Weather data is not available yet...</h3>
@@ -1152,12 +1149,12 @@ def getTimeZone() {
 	return tz
 }
 
-def getDtNow() {
-	def now = new Date()
+String getDtNow() {
+	Date now = new Date()
 	return formatDt(now)
 }
 
-def formatDt(dt) {
+String formatDt(Date dt) {
 	def tf = new SimpleDateFormat("E MMM dd HH:mm:ss z yyyy")
 	if(getTimeZone()) { tf.setTimeZone(getTimeZone()) }
 	else {
@@ -1166,15 +1163,15 @@ def formatDt(dt) {
 	return tf.format(dt)
 }
 
-def GetTimeDiffSeconds(strtDate, stpDate=null, methName=null) {
+Integer GetTimeDiffSeconds(String strtDate, String stpDate=(String)null, String methName=(String)null) {
 	//LogTrace("[GetTimeDiffSeconds] StartDate: $strtDate | StopDate: ${stpDate ?: "Not Sent"} | MethodName: ${methName ?: "Not Sent"})")
 	if((strtDate && !stpDate) || (strtDate && stpDate)) {
 		//if(strtDate?.contains("dtNow")) { return 10000 }
-		def now = new Date()
-		def stopVal = stpDate ? stpDate.toString() : formatDt(now)
-		def start = Date.parse("E MMM dd HH:mm:ss z yyyy", strtDate).getTime()
-		def stop = Date.parse("E MMM dd HH:mm:ss z yyyy", stopVal).getTime()
-		def diff = (int) (long) (stop - start) / 1000
+		Date now = new Date()
+		String stopVal = stpDate ? stpDate.toString() : formatDt(now)
+		Long start = Date.parse("E MMM dd HH:mm:ss z yyyy", strtDate).getTime()
+		Long stop = Date.parse("E MMM dd HH:mm:ss z yyyy", stopVal).getTime()
+		Integer diff = (Integer) ((stop - start) / 1000L)
 		LogTrace("[GetTimeDiffSeconds] Results for '$methName': ($diff seconds)")
 		return diff
 	} else { return null }
@@ -1185,51 +1182,51 @@ def GetTimeDiffSeconds(strtDate, stpDate=null, methName=null) {
 |									LOGGING AND Diagnostic									|
 *************************************************************************************************/
 
-def LogTrace(msg, logSrc=null) {
-	def trOn = (showDebug && advAppDebug) ? true : false
+void LogTrace(String msg, logSrc=null) {
+	Boolean trOn = (showDebug && advAppDebug)
 	if(trOn) {
 		Logger(msg, "trace")
 	}
 }
 
-def LogAction(msg, type="debug", showAlways=false, logSrc=null) {
-	def isDbg = showDebug ? true : false
+void LogAction(String msg, String type="debug", Boolean showAlways=false, logSrc=null) {
+	Boolean isDbg = showDebug
 	if(showAlways || isDbg) { Logger(msg, type) }
 }
 
-def Logger(msg, type="debug", logSrc=null, noSTlogger=false) {
+void Logger(String msg, String type="debug", logSrc=null, Boolean noSTlogger=false) {
 	if(msg && type) {
-		def labelstr = ""
-		if(state?.dbgAppndName == null) {
-			def tval = parent ? parent.getSettingVal("dbgAppndName") : settings?.dbgAppndName
-			state?.dbgAppndName = (tval || tval == null) ? true : false
+		String labelstr = ""
+		if(state.dbgAppndName == null) {
+			Boolean tval = parent ? parent.getSettingVal("dbgAppndName") : settings?.dbgAppndName
+			state.dbgAppndName = (tval || tval == null)
 		}
-		def t0 = app.label
-		if(state?.dbgAppndName) { labelstr = "${app.label} | " }
-		def themsg = "${labelstr}${msg}"
+		String t0 = app.label
+		if(state.dbgAppndName) { labelstr = app.label+' | ' }
+		String themsg = "${labelstr}${msg}".toString()
 		//log.debug "Logger remDiagTest: $msg | $type | $logSrc"
 		if(!noSTlogger) {
 			switch(type) {
 				case "debug":
-					log.debug "${themsg}"
+					log.debug themsg
 					break
 				case "info":
-					log.info "| ${themsg}"
+					log.info '| '+themsg
 					break
 				case "trace":
-					log.trace "| ${themsg}"
+					log.trace '| '+themsg
 					break
 				case "error":
-					log.error "| ${themsg}"
+					log.error '| '+themsg
 					break
 				case "warn":
-					log.warn "|| ${themsg}"
+					log.warn '|| '+themsg
 					break
 				default:
-					log.debug "${themsg}"
+					log.debug themsg
 					break
 			}
 		}
 	}
-	else { log.error "${labelstr}Logger Error - type: ${type} | msg: ${msg} | logSrc: ${logSrc}" }
+	else { log.error "${labelstr}Logger Error - type: ${type} | msg: ${msg} | logSrc: ${logSrc}".toString() }
 }
