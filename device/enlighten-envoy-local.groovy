@@ -14,8 +14,8 @@
  *
  */
 
-def version() {
-	return "1.0.0"
+static String version() {
+	return "1.0.1"
 }
 
 preferences {
@@ -41,14 +41,14 @@ metadata {
 		capability "Refresh"
 		capability "Polling"
 
-		attribute "energy_yesterday", "string"
-		attribute "energy_last7days", "string"
-		attribute "energy_life", "string"
+		attribute "energy_yesterday", "number"
+		attribute "energy_last7days", "number"
+		attribute "energy_life", "number"
 		attribute "power_details", "string"
-		attribute "efficiency", "string"
-		attribute "efficiency_yesterday", "string"
-		attribute "efficiency_last7days", "string"
-		attribute "efficiency_lifetime", "string"
+		attribute "efficiency", "number"
+		attribute "efficiency_yesterday", "number"
+		attribute "efficiency_last7days", "number"
+		attribute "efficiency_lifetime", "number"
 
 		attribute "installationDate", "string"
 
@@ -59,15 +59,15 @@ metadata {
 	}
 }
 
-def poll() {
+void poll() {
 	pullData()
 }
 
-def refresh() {
+void refresh() {
 	pullData()
 }
 
-def updated() {
+void updated() {
 	if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 2000) {
 		state.updatedLastRanAt = now()
 		log.trace("$device.displayName - updated() called with settings: ${settings.inspect()}")
@@ -85,22 +85,22 @@ def updated() {
 	}
 }
 
-def ping() {
+void ping() {
 	log.trace("$device.displayName - checking device health…")
 	pullData()
 }
 
-def startPoll() {
+void startPoll() {
 	unschedule()
 	// Schedule polling based on preference setting
 	def sec = Math.round(Math.floor(Math.random() * 60))
 	def min = Math.round(Math.floor(Math.random() * settings.pollingInterval.toInteger()))
-	def cron = "${sec} ${min}/${settings.pollingInterval.toInteger()} * * * ?" // every N min
+	String cron = "${sec} ${min}/${settings.pollingInterval.toInteger()} * * * ?" // every N min
 	log.trace("$device.displayName - startPoll: schedule('$cron', pullData)")
 	schedule(cron, pullData)
 }
 
-private def updateDNI() {
+void updateDNI() {
 	if (!state.dni || state.dni != device.deviceNetworkId || (state.mac && state.mac != device.deviceNetworkId)) {
 		device.setDeviceNetworkId(createNetworkId(settings.confIpAddr, settings.confTcpPort))
 		state.dni = device.deviceNetworkId
@@ -122,7 +122,7 @@ private String getHostAddress() {
 	return "${settings.confIpAddr}:${settings.confTcpPort}"
 }
 
-def pullData() {
+void pullData() {
 	updateDNI()
 	if (!state.installationDate) {
 		log.debug "${device.displayName} - requesting installation date from Envoy…"
@@ -150,7 +150,7 @@ def pullData() {
 }
 
 private Integer retrieveProductionValue(String body, String heading) {
-	def val = 0
+	Integer val = 0
 	def patternString = "(?ms).*?${heading}.*?<td>\\s*([\\d\\.]+)\\s*([kM]?W)h?<.*"
 	if (body ==~ /${patternString}/) {
 		body.replaceFirst(/${patternString}/) {all, num, unit ->
@@ -177,7 +177,7 @@ private Map parseHTMLProductionData(String body) {
 	return data
 }
 
-def installationDateCallback(hubitat.device.HubResponse msg) {
+void installationDateCallback(hubitat.device.HubResponse msg) {
 	if (!state.mac || state.mac != msg.mac) {
 		state.mac = msg.mac
 	}
@@ -205,7 +205,7 @@ def installationDateCallback(hubitat.device.HubResponse msg) {
 	pullData()
 }
 
-def dataCallback(hubitat.device.HubResponse msg) {
+void dataCallback(hubitat.device.HubResponse msg) {
 	if (!state.mac || state.mac != msg.mac) {
 		state.mac = msg.mac
 	}
@@ -239,7 +239,7 @@ def dataCallback(hubitat.device.HubResponse msg) {
 	def powerTable = state?.powerTable
 	def energyTable = state?.energyTable
 
-	def dayChg = false
+	Boolean dayChg = false
 	if (!state.today || state.today != todayDay) {
 		dayChg = true
 		state.peakpower = currentPower
@@ -297,7 +297,7 @@ def dataCallback(hubitat.device.HubResponse msg) {
 
 	// get power data for yesterday and today so we can create a graph
 	if (state.powerTableYesterday == null || state.energyTableYesterday == null || powerTable == null || energyTable == null) {
-		def startOfToday = timeToday("00:00", location.timeZone)
+		Date startOfToday = timeToday("00:00", location.timeZone)
 		def newValues
 		if (state.powerTableYesterday == null || state.energyTableYesterday == null) {
 			//log.trace "Querying DB for yesterday's data…"
