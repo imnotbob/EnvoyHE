@@ -94,7 +94,6 @@ void installed() {
 void updated() {
 	log.debug "${app.getLabel()} Updated...with settings: ${settings}"
 	state?.isInstalled = true
-	initialize()
 	state?.lastUpdatedDt = getDtNow()
 }
 
@@ -106,6 +105,9 @@ void uninstalled() {
 void initialize() {
 	log.debug "${app.label} Initialize..."		// Must be log.debug
 	if(!state?.autoTyp) { state.autoTyp = "chart" }
+	settingUpdate("showDebug", "true", "bool")
+	settingUpdate("advAppDebug", "true", "bool")
+	initialize()
 	resetVars()
 	if(!state?.isInstalled) { state?.isInstalled = true }
 
@@ -141,9 +143,6 @@ def initAutoApp() {
 
 	app.updateLabel(getAutoTypeLabel())
 	LogAction("Automation Label: ${getAutoTypeLabel()}", "info", true)
-
-	settingUpdate("showDebug", "true", "bool")
-	settingUpdate("advAppDebug", "true", "bool")
 
 	scheduleAutomationEval(10)
 	if(showDebug || advAppDebug) { runIn(1800, logsOff) }
