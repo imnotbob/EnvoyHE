@@ -15,7 +15,7 @@
  */
 
 static String version() {
-	return "1.0.1"
+	return "1.0.2"
 }
 
 preferences {
@@ -31,6 +31,7 @@ preferences {
 		required: true, displayDuringSetup: true)
 	input("confPanelSize", "number", title:"Panel size (W)", description: "Rated maximum power in Watts for each panel",
 		required: true, displayDuringSetup: true)
+	input("debugEnable", "bool", title: "Enable debug logging?", defaultValue: true)
 }
 
 metadata {
@@ -52,7 +53,7 @@ metadata {
 
 		attribute "installationDate", "string"
 
-		attribute "numInverters",  "number"
+		attribute "numInverters", "number"
 		attribute "pollingInterval", "number"
 		attribute "inverterSize", "number"
 		attribute "panelSize", "number"
@@ -70,7 +71,7 @@ void refresh() {
 void updated() {
 	if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 2000) {
 		state.updatedLastRanAt = now()
-		log.trace("$device.displayName - updated() called with settings: ${settings.inspect()}")
+		trace "updated() called with settings: ${settings.inspect()}".toString()
 		state.remove('api')
 		state.remove('installationDate')
 		state.maxPower = settings.confNumInverters * settings.confInverterSize
@@ -80,13 +81,19 @@ void updated() {
 		sendEvent(name: "panelSize", value: confPanelSize, displayed:false)
 		pullData()
 		startPoll()
+		if(debugEnable) runIn(1800,logsOff)
 	} else {
-		log.trace("$device.displayName - updated() ran within the last 2 seconds - skipping")
+		trace "updated() ran within the last 2 seconds - skipping"
 	}
 }
 
+void logsOff() {
+	debug "debug logging disabled..."
+	device.updateSetting("debugEnable",[value:"false",type:"bool"])
+}
+
 void ping() {
-	log.trace("$device.displayName - checking device health…")
+	trace "checking device health…"
 	pullData()
 }
 
@@ -96,7 +103,7 @@ void startPoll() {
 	def sec = Math.round(Math.floor(Math.random() * 60))
 	def min = Math.round(Math.floor(Math.random() * settings.pollingInterval.toInteger()))
 	String cron = "${sec} ${min}/${settings.pollingInterval.toInteger()} * * * ?" // every N min
-	log.trace("$device.displayName - startPoll: schedule('$cron', pullData)")
+	trace "startPoll: schedule('$cron', pullData)".toString()
 	schedule(cron, pullData)
 }
 
@@ -115,7 +122,7 @@ private String createNetworkId(ipaddr, port) {
 		String.format('%02X', it.toInteger())
 	}.join()
 	def hexPort = String.format('%04X', port.toInteger())
-	return "${hexIp}:${hexPort}"
+	return "${hexIp}:${hexPort}".toString()
 }
 
 private String getHostAddress() {
@@ -125,7 +132,7 @@ private String getHostAddress() {
 void pullData() {
 	updateDNI()
 	if (!state.installationDate) {
-		log.debug "${device.displayName} - requesting installation date from Envoy…"
+		debug "requesting installation date from Envoy…".toString()
 		sendHubCommand(new hubitat.device.HubAction([
 				method: "GET",
 				path: "/production?locale=en",
@@ -136,7 +143,7 @@ void pullData() {
 		)
 	} else {
 		state.lastRequestType = (state.api == "HTML" ? "HTML" : "JSON API")
-		log.debug "${device.displayName} - requesting latest data from Envoy via ${state.lastRequestType}…"
+		debug "requesting latest data from Envoy via ${state.lastRequestType}…".toString()
 		updateDNI()
 		sendHubCommand(new hubitat.device.HubAction([
 				method: "GET",
@@ -182,23 +189,23 @@ void installationDateCallback(hubitat.device.HubResponse msg) {
 		state.mac = msg.mac
 	}
 	if (!state.installationDate && !msg.json && msg.body) {
-		log.debug "${device.displayName} - trying to determine system installation date…"
+		debug "trying to determine system installation date…"
 		def patternString = "(?ms).*?System has been live since.*?>(.*?)<.*"
 		if (msg.body ==~ /${patternString}/) {
 			msg.body.replaceFirst(/${patternString}/) {all, dateString ->
 				try {
 					state.installationDate = new Date().parse("E MMM dd, yyyy H:m a z", dateString).getTime()
-					log.debug "${device.displayName} - system has been live since ${dateString}"
+					debug "system has been live since ${dateString}".toString()
 					sendEvent(name: 'installationDate', value: "System live since " + new Date(state.installationDate).format("MMM dd, yyyy"), displayed: false)
 				}
 				catch (Exception ex) {
-					log.debug "${device.displayName} - unable to parse installation date '${dateString}' ('${ex}')"
+					debug "unable to parse installation date '${dateString}' ('${ex}')".toString()
 					state.installationDate = -1
 				}
 			}
 		}
 		else {
-			log.debug "${device.displayName} - unable to find installation date on page"
+			debug "unable to find installation date on page"
 			state.installationDate = -1
 		}
 	}
@@ -210,23 +217,23 @@ void dataCallback(hubitat.device.HubResponse msg) {
 		state.mac = msg.mac
 	}
 	if (!state.api && state.lastRequestType != "HTML" && (msg.status != 200 || !msg.json)) {
-		log.debug "${device.displayName} - JSON API not available, falling back to HTML interface (Envoy responded with status code ${msg.status})"
+		debug "JSON API not available, falling back to HTML interface (Envoy responded with status code ${msg.status})".toString()
 		state.api = "HTML"
 		return
 	}
 	else if (!msg.body) {
-		log.error "${device.displayName} - no HTTP body found in '${message}'"
+		log.error "${device.displayName} - no HTTP body found in '${message}'".toString()
 		return
 	}
 	def data = state.api == "HTML" ? parseHTMLProductionData(msg.body) : msg.json
 
 	if (state.lastData && (data.wattHoursToday == state.lastData.wattHoursToday) && (data.wattsNow == state.lastData.wattsNow)) {
-		log.debug "${device.displayName} - no new data"
+		debug "no new data"
 		//sendEvent(name: 'lastUpdate', value: new Date(), displayed: false) // dummy event for health check
 		return
 	}
 	state.lastData = data
-	log.debug "${device.displayName} - new data: ${data}"
+	debug "new data: ${data}".toString()
 
 	def energyToday = (data.wattHoursToday/1000).toFloat()
 
@@ -300,7 +307,7 @@ void dataCallback(hubitat.device.HubResponse msg) {
 		Date startOfToday = timeToday("00:00", location.timeZone)
 		def newValues
 		if (state.powerTableYesterday == null || state.energyTableYesterday == null) {
-			//log.trace "Querying DB for yesterday's data…"
+			//trace "Querying DB for yesterday's data…"
 			def dataTable = []
 			def powerData = [:] //device.statesBetween("power", startOfToday - 1, startOfToday, [max: 288]) // 24h in 5min intervals should be more than sufficient…
 			// work around a bug where the platform would return less than the requested number of events (as of June 2016, only 50 events are returned)
@@ -331,7 +338,7 @@ void dataCallback(hubitat.device.HubResponse msg) {
 			state.energyTableYesterday = dataTable
 		}
 		if (powerTable == null || energyTable == null) {
-			log.trace "Querying DB for today's data…"
+			//trace "Querying DB for today's data…"
 			powerTable = []
 			def powerData = [:] //device.statesSince("power", startOfToday, [max: 288])
 			if (powerData.size()) {
@@ -366,4 +373,12 @@ void dataCallback(hubitat.device.HubResponse msg) {
 	}
 	state.powerTable = powerTable
 	state.energyTable = energyTable
+}
+
+void debug(String msg) {
+	if(debugEnable) log.debug device.displayName+' - '+msg
+}
+
+void trace(String msg) {
+	if(debugEnable) log.trace device.displayName+' - '+msg
 }

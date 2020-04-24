@@ -125,7 +125,7 @@ void resetVars() {
 //		state.powerTableYesterday = [[7, 9, 4], [7, 54, 61], [8, 9, 101], [8, 24, 134], [8, 39, 174], [8, 54, 228], [9, 9, 396], [9, 24, 610], [9, 39, 912], [9, 54, 1114], [10, 9, 1146], [10, 24, 1478], [10, 39, 1644], [10, 54, 1824], [11, 9, 2046], [11, 24, 1933], [11, 39, 2183], [11, 54, 2442], [12, 9, 1908], [12, 24, 2058], [12, 39, 2641], [12, 54, 2732], [13, 9, 2553], [13, 24, 2546], [13, 39, 3114], [13, 54, 2831], [14, 9, 2752], [14, 24, 2432], [14, 39, 2398], [14, 54, 2052], [15, 9, 1311], [15, 24, 1080], [15, 39, 797], [15, 54, 1152], [16, 9, 1793], [16, 24, 1055], [16, 39, 382], [16, 54, 103], [17, 9, 48], [18, 9, 0]]
 //		state.energyTable = [[7, 14, 0.001], [7, 59, 0.054], [8, 14, 0.085], [8, 29, 0.121], [8, 44, 0.161], [8, 59, 0.223], [9, 14, 0.324], [9, 29, 0.476], [9, 44, 0.685], [9, 59, 0.951], [10, 14, 1.278], [10, 29, 1.661], [10, 44, 2.096], [10, 59, 2.577], [11, 14, 3.1], [11, 29, 3.661], [11, 44, 4.257], [11, 59, 4.882], [12, 14, 5.533], [12, 29, 6.205], [12, 44, 6.896], [12, 59, 7.602], [13, 14, 8.322], [13, 29, 9.059], [13, 44, 9.798], [13, 59, 10.512], [14, 14, 11.229], [14, 29, 11.939], [14, 44, 12.619], [14, 59, 13.273], [15, 14, 13.902], [15, 29, 14.497], [15, 44, 15.051], [15, 59, 15.547], [16, 14, 15.944], [16, 29, 16.206], [16, 44, 16.276], [16, 59, 16.3], [17, 59, 16.3]]
 //		state.energyTableYesterday = [[7, 9, 0.001], [7, 54, 0.045], [8, 9, 0.069], [8, 24, 0.101], [8, 39, 0.144], [8, 54, 0.199], [9, 9, 0.296], [9, 24, 0.444], [9, 39, 0.665], [9, 54, 0.933], [10, 9, 1.21], [10, 24, 1.568], [10, 39, 1.965], [10, 54, 2.405], [11, 9, 2.9], [11, 24, 3.369], [11, 39, 3.898], [11, 54, 4.495], [12, 9, 4.957], [12, 24, 5.456], [12, 39, 6.101], [12, 54, 6.771], [13, 9, 7.395], [13, 24, 8.018], [13, 39, 8.783], [13, 54, 9.475], [14, 9, 10.151], [14, 24, 10.745], [14, 39, 11.329], [14, 54, 11.827], [15, 9, 12.145], [15, 24, 12.406], [15, 39, 12.599], [15, 54, 12.878], [16, 9, 13.31], [16, 24, 13.566], [16, 39, 13.659], [16, 54, 13.684], [17, 9, 13.686], [18, 9, 13.686]]
-//		state.today =  "09"
+//		state.today = "09"
 //		state.eric = true
 	}
 }
@@ -262,7 +262,7 @@ void scheduleAutomationEval(Integer schedtime = defaultAutomationTime()) {
 	if(theTime < defaultAutomationTime()) { theTime = defaultAutomationTime() }
 	String autoType = getAutoType()
 	def random = new Random()
-	Integer random_int = random.nextInt(6)  // this randomizes a bunch of automations firing at same time off same event
+	Integer random_int = random.nextInt(6) // this randomizes a bunch of automations firing at same time off same event
 	Boolean waitOverride = false
 	switch(autoType) {
 		case "chart":
@@ -541,7 +541,7 @@ def renderDeviceTiles(String type=null, theDev=null) {
 		devices.sort {it.getLabel()}.each { dev ->
 			def navMap = [:]
 			Boolean hasHtml = true // (dev?.hasHtml() == true)
-			if( (  (dev?.typeName in ["Enlighten Envoy (local)"]) &&
+			if( ( (dev?.typeName in ["Enlighten Envoy (local)"]) &&
 				(hasHtml && !type) || (hasHtml && type && dev?.typeName == type)) ) {
 LogTrace("renderDeviceTiles: ${dev.id} ${dev.name} ${theDev?.name}  ${dev.typeName}")
 				navMap = ["key":dev?.getLabel(), "items":[]]
@@ -695,13 +695,13 @@ String getSDeviceTile(Integer devNum, dev) {
 		def energyStr = dev.currentState("energy").value
 		def efficiencyToday = dev.currentState("efficiency").value
 
-		def energyYesterday =  dev.currentState("energy_yesterday").value
+		def energyYesterday = dev.currentState("energy_yesterday").value
 		def efficiencyYesterday = dev.currentState("efficiency_yesterday").value
 
 		def energyLast7Days = dev.currentState("energy_last7days").value
 		def efficiencyLast7Days = dev.currentState("efficiency_last7days").value
 
-		def energyLife =  dev.currentState("energy_life").value
+		def energyLife = dev.currentState("energy_life").value
 		def efficiencyLifetime = dev.currentState("efficiency_lifetime")?.value
 			//<h4 style="font-size: 22px; font-weight: bold; text-align: center; background: #00a1db; color: #f5f5f5;">Event History</h4>
 					//<h4 class="bottomBorder"> ${location.name} </h4>
@@ -891,7 +891,7 @@ String getDataString(Integer seriesIndex) {
 			dataTable = state.powerTable
 			break
 	}
-	LogTrace("getDataString: ${seriesIndex},  ${dataTable?.size()}")
+	LogTrace("getDataString: ${seriesIndex}, ${dataTable?.size()}")
 	dataTable.each() {
 		def dataArray = [[it[0],it[1],0],null,null,null,null]
 		dataArray[seriesIndex] = it[2]
@@ -903,11 +903,11 @@ String getDataString(Integer seriesIndex) {
 void getSomeData(dev, Boolean devpoll = false) {
 //	LogTrace("getSomeData ${app} ${dev.label} ${dev.id}")
 
-	def energyToday =  dev.currentState("energy").value.toFloat()
+	def energyToday = dev.currentState("energy").value.toFloat()
 /*
-	def energyYesterday =  dev.currentState("energy_yesterday").value
+	def energyYesterday = dev.currentState("energy_yesterday").value
 	def energyLast7Days = dev.currentState("energy_last7days").value
-	def energyLife =  dev.currentState("energy_life").value
+	def energyLife = dev.currentState("energy_life").value
 */
 	Integer currentPower = dev.currentState("power").value.toInteger()
 /*
@@ -932,7 +932,7 @@ void getSomeData(dev, Boolean devpoll = false) {
 	List powerTable = state?.powerTable
 	List energyTable = state?.energyTable
 
-      if (!state.today || state.today != todayDay) {
+	if (!state.today || state.today != todayDay) {
 		state.peakpower = currentPower
 		state.today = todayDay
 		state.powerTableYesterday = powerTable
@@ -1122,7 +1122,7 @@ static List addValue(List table, hr, mins, val) {
 
 Integer getStartTime(String tbl1, String tbl2) {
 	Integer startTime = 24
-	LogTrace("tbl1: ${state."tbl1"?.size()}   tbl2: ${state."tbl2"?.size()} ")
+	LogTrace("tbl1: ${state."tbl1"?.size()} tbl2: ${state."tbl2"?.size()} ")
 	if (state."${tbl1}"?.size()) {
 		startTime = state."${tbl1}".min{it[0].toInteger()}[0].toInteger()
 	}
