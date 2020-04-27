@@ -2,7 +2,7 @@
 |	Application Name: Solar Graphs								|
 |	Copyright (C) 2019									|
 |	Authors: Eric S. (@E_sch)								|
-| Modified April 17, 2020									|
+| Modified April 27, 2020									|
 |************************************************************************************************/
 
 import groovy.json.*
@@ -95,6 +95,7 @@ void updated() {
 	log.debug "${app.getLabel()} Updated...with settings: ${settings}"
 	state?.isInstalled = true
 	state?.lastUpdatedDt = getDtNow()
+	initialize()
 }
 
 void uninstalled() {
@@ -107,7 +108,6 @@ void initialize() {
 	if(!state?.autoTyp) { state.autoTyp = "chart" }
 	settingUpdate("showDebug", "true", "bool")
 	settingUpdate("advAppDebug", "true", "bool")
-	initialize()
 	resetVars()
 	if(!state?.isInstalled) { state?.isInstalled = true }
 
