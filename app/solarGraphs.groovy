@@ -422,7 +422,7 @@ static String inputTitleStr(title)	{ return "<u>$title</u>" }
 static String pageTitleStr(title)	 { return "<h1>$title</h1>" }
 static String paraTitleStr(title)	 { return "<b>$title</b>" }
 
-String imgTitle(imgSrc, titleStr, color=null, imgWidth=30, imgHeight=null) {
+static String imgTitle(imgSrc, titleStr, color=null, imgWidth=30, imgHeight=null) {
 	def imgStyle = ""
 	imgStyle += imgWidth ? "width: ${imgWidth}px !important;" : ""
 	imgStyle += imgHeight ? "${imgWidth ? " " : ""}height: ${imgHeight}px !important;" : ""
@@ -430,7 +430,7 @@ String imgTitle(imgSrc, titleStr, color=null, imgWidth=30, imgHeight=null) {
 	else { return """<img style="${imgStyle}" src="${imgSrc}"> ${titleStr}</img>""" }
 }
 
-String icons(String name, String napp="App") {
+static String icons(String name, String napp="App") {
 	def icon_names = [
 		"i_dt": "delay_time",
 		"i_not": "notification",

@@ -156,7 +156,7 @@ void pullData() {
 	}
 }
 
-private Integer retrieveProductionValue(String body, String heading) {
+private static Integer retrieveProductionValue(String body, String heading) {
 	Integer val = 0
 	def patternString = "(?ms).*?${heading}.*?<td>\\s*([\\d\\.]+)\\s*([kM]?W)h?<.*"
 	if (body ==~ /${patternString}/) {
@@ -175,7 +175,7 @@ private Integer retrieveProductionValue(String body, String heading) {
 	return null
 }
 
-private Map parseHTMLProductionData(String body) {
+private static Map parseHTMLProductionData(String body) {
 	def data = [:]
 	data.wattHoursToday = retrieveProductionValue(body, "Today")
 	data.wattHoursSevenDays = retrieveProductionValue(body, "Past Week")
