@@ -1,0 +1,28 @@
+{
+  "packageName": "enphase Solar",
+  "author": "nh.schottfam",
+  "minimumHEVersion": "2.1.9",
+  "dateReleased": "2020-05-17",
+  "apps": [
+    {
+      "id": "331b36cb-7ac3-46ad-9802-c76a32dc7132",
+      "name": "Solar Graphs",
+      "namespace": "E_Sch",
+      "location": "https://raw.githubusercontent.com/imnotbob/EnvoyHE/master/app/solarGraphs.groovy",
+      "required": true,
+      "oauth": true
+    }
+  ],
+  "drivers": [
+    {
+      "id": "80d73741-222b-421d-be78-d5f7c20b3d38",
+      "name": "Enlighten Envoy (local)",
+      "namespace": "E_Sch",
+      "location": "https://raw.githubusercontent.com/imnotbob/EnvoyHE/master/device/enlighten-envoy-local.groovy",
+      "required": true
+    }
+  ],
+  "version": "1.0.0",
+  "releaseNotes": "Latest release",
+  "communityLink": "ihttps://community.hubitat.com/t/enphase-solar-monitoring/6241/8"
+}
