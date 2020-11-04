@@ -2,7 +2,7 @@
 |	Application Name: Solar Graphs								|
 |	Copyright (C) 2019									|
 |	Authors: Eric S. (@E_sch)								|
-| Modified April 27, 2020									|
+| Modified November 4, 2020									|
 |************************************************************************************************/
 
 import groovy.json.*
@@ -21,7 +21,7 @@ definition(
 	iconX3Url: "",
 	oauth: true)
 
-static String appVersion() { "0.0.3" }
+static String appVersion() { "0.0.4" }
 
 preferences {
 	page(name: "startPage")
@@ -695,14 +695,18 @@ String getSDeviceTile(Integer devNum, dev) {
 		def energyStr = dev.currentState("energy").value
 		def efficiencyToday = dev.currentState("efficiency").value
 
-		def energyYesterday = dev.currentState("energy_yesterday").value
-		def efficiencyYesterday = dev.currentState("efficiency_yesterday").value
-
-		def energyLast7Days = dev.currentState("energy_last7days").value
-		def efficiencyLast7Days = dev.currentState("efficiency_last7days").value
-
-		def energyLife = dev.currentState("energy_life").value
-		def efficiencyLifetime = dev.currentState("efficiency_lifetime")?.value
+		def energyYesterday = 0
+		def efficiencyYesterday = 0
+		def energyLast7Days = 0
+		def efficiencyLast7Days = 0
+		if (dev.currentState("energy_yesterday") != null){
+			energyYesterday = dev.currentState("energy_yesterday").value
+			efficiencyYesterday = dev.currentState("efficiency_yesterday").value
+		}
+		if (dev.currentState("energy_last7days") != null){
+			energyLast7Days = dev.currentState("energy_last7days").value
+			efficiencyLast7Days = dev.currentState("efficiency_last7days").value
+		}
 			//<h4 style="font-size: 22px; font-weight: bold; text-align: center; background: #00a1db; color: #f5f5f5;">Event History</h4>
 					//<h4 class="bottomBorder"> ${location.name} </h4>
 
