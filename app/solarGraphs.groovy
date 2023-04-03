@@ -2,8 +2,11 @@
 |	Application Name: Solar Graphs								|
 |	Copyright (C) 2019									|
 |	Authors: Eric S. (@E_sch)								|
-| Modified November 4, 2020									|
+| Modified April 3, 2023									|
 |************************************************************************************************/
+//file:noinspection unused
+//file:noinspection GroovyUnusedAssignment
+//file:noinspection SpellCheckingInspection
 
 import groovy.json.*
 import java.text.SimpleDateFormat
@@ -21,7 +24,7 @@ definition(
 	iconX3Url: "",
 	oauth: true)
 
-static String appVersion() { "0.0.4" }
+static String appVersion() { "0.0.5" }
 
 preferences {
 	page(name: "startPage")
@@ -651,8 +654,9 @@ LogTrace("renderDeviceTiles: ${dev.id} ${dev.name} ${theDev?.name}  ${dev.typeNa
 
 Map navHtmlBuilder(navMap, idNum) {
 	Map res = [:]
-	String htmlStr = ""
-	String jsStr = ""
+	String htmlStr; jsStr
+	htmlStr = ""
+	jsStr = ""
 	if(navMap?.key) {
 		htmlStr += """
 			<div class="nav-cont-bord-div nav-menu">
@@ -689,24 +693,29 @@ static String navJsBuilder(String btnId, String divId) {
 
 String getSDeviceTile(Integer devNum, dev) {
 //Logger("W1")
-		String updateAvail = !state.updateAvailable ? "" : """<div class="greenAlertBanner">Device Update Available!</div>"""
-		String clientBl = state?.clientBl ? """<div class="brightRedAlertBanner">Your Manager client has been blacklisted!\nPlease contact the Nest Manager developer to get the issue resolved!!!</div>""" : ""
+	String updateAvail = !state.updateAvailable ? "" : """<div class="greenAlertBanner">Device Update Available!</div>"""
+	String clientBl = state?.clientBl ? """<div class="brightRedAlertBanner">Your Manager client has been blacklisted!\nPlease contact the Nest Manager developer to get the issue resolved!!!</div>""" : ""
 //Logger("W2")
-		def energyStr = dev.currentState("energy").value
-		def efficiencyToday = dev.currentState("efficiency").value
+	def energyStr = dev.currentState("energy").value
+	def efficiencyToday = dev.currentState("efficiency").value
 
-		def energyYesterday = 0
-		def efficiencyYesterday = 0
-		def energyLast7Days = 0
-		def efficiencyLast7Days = 0
-		if (dev.currentState("energy_yesterday") != null){
-			energyYesterday = dev.currentState("energy_yesterday").value
-			efficiencyYesterday = dev.currentState("efficiency_yesterday").value
-		}
-		if (dev.currentState("energy_last7days") != null){
-			energyLast7Days = dev.currentState("energy_last7days").value
-			efficiencyLast7Days = dev.currentState("efficiency_last7days").value
-		}
+	def energyYesterday, efficiencyYesterday, energyLast7Days, efficiencyLast7Days
+	energyYesterday = 0
+	efficiencyYesterday = 0
+	energyLast7Days = 0
+	efficiencyLast7Days = 0
+	if (dev.currentState("energy_yesterday") != null){
+		energyYesterday = dev.currentState("energy_yesterday").value
+		efficiencyYesterday = dev.currentState("efficiency_yesterday").value
+	}
+	if (dev.currentState("energy_last7days") != null){
+		energyLast7Days = dev.currentState("energy_last7days").value
+		efficiencyLast7Days = dev.currentState("efficiency_last7days").value
+	}
+
+	def energyLife = dev.currentState("energy_life").value
+	def efficiencyLifetime = dev.currentState("efficiency_lifetime")?.value
+
 			//<h4 style="font-size: 22px; font-weight: bold; text-align: center; background: #00a1db; color: #f5f5f5;">Event History</h4>
 					//<h4 class="bottomBorder"> ${location.name} </h4>
 
@@ -752,7 +761,8 @@ String getSDeviceTile(Integer devNum, dev) {
 
 String historyGraphHtml(Integer devNum, dev) {
 //Logger("HistoryG 1")
-	String html = ""
+	String html
+	html = ""
 	if(true) {
 //Logger("HistoryG 2")
 			html = """
@@ -820,6 +830,7 @@ String historyGraphHtml(Integer devNum, dev) {
 			<div id="chart_div${devNum}" style="width: 100%; height: 225px;"></div>
 			"""
 	}
+	return html
 }
 
 
@@ -839,7 +850,7 @@ String getWebHeaderHtml(String title, Boolean clipboard=true, Boolean vex=false,
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 		<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
 		<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
-		<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/simplefocus/FlowType.JS@master/flowtype.js"></script>
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css">
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
@@ -879,25 +890,25 @@ String hideChartHtml() {
 }
 
 String getDataString(Integer seriesIndex) {
-	String dataString = ""
-	List dataTable = []
+	String dataString; dataString = ""
+	List<List> dataTable; dataTable = []
 	switch (seriesIndex) {
 		case 1:
-			dataTable = state.energyTableYesterday
+			dataTable = (List<List>)state.energyTableYesterday
 			break
 		case 2:
-			dataTable = state.powerTableYesterday
+			dataTable = (List<List>)state.powerTableYesterday
 			break
 		case 3:
-			dataTable = state.energyTable
+			dataTable = (List<List>)state.energyTable
 			break
 		case 4:
-			dataTable = state.powerTable
+			dataTable = (List<List>)state.powerTable
 			break
 	}
 	LogTrace("getDataString: ${seriesIndex}, ${dataTable?.size()}")
 	dataTable.each() {
-		def dataArray = [[it[0],it[1],0],null,null,null,null]
+		List dataArray = [[it[0],it[1],0],null,null,null,null]
 		dataArray[seriesIndex] = it[2]
 		dataString += dataArray.toString() + ","
 	}
@@ -933,8 +944,9 @@ void getSomeData(dev, Boolean devpoll = false) {
 
 //	LogTrace("getSomeData: ${today} ${todayDay} ${dev.id}")
 
-	List powerTable = state?.powerTable
-	List energyTable = state?.energyTable
+	List<List> powerTable, energyTable
+	powerTable = (List<List>)state?.powerTable
+	energyTable = (List<List>)state?.energyTable
 
 	if (!state.today || state.today != todayDay) {
 		state.peakpower = currentPower
@@ -963,8 +975,9 @@ void getSomeData(dev, Boolean devpoll = false) {
 		def newValues
 		if (state.powerTableYesterday == null || state.energyTableYesterday == null) {
 			log.trace "Querying DB for yesterday's data…"
-			def dataTable = []
-			def powerData = [:] //device.statesBetween("power", startOfToday - 1, startOfToday, [max: 288]) // 24h in 5min intervals should be more than sufficient…
+			List<List> dataTable; dataTable = []
+			List powerData
+			powerData = [] //device.statesBetween("power", startOfToday - 1, startOfToday, [max: 288]) // 24h in 5min intervals should be more than sufficient…
 			// work around a bug where the platform would return less than the requested number of events (as of June 2016, only 50 events are returned)
 			if (powerData.size()) {
 /*
@@ -978,7 +991,8 @@ void getSomeData(dev, Boolean devpoll = false) {
 			}
 			state.powerTableYesterday = dataTable
 			dataTable = []
-			def energyData = [:] //device.statesBetween("energy", startOfToday - 1, startOfToday, [max: 288])
+			Map energyData
+			energyData = [:] //device.statesBetween("energy", startOfToday - 1, startOfToday, [max: 288])
 			if (energyData.size()) {
 /*
 				while ((newValues = [:] //device.statesBetween("energy", startOfToday - 1, energyData.last().date, [max: 288])).size()) {
@@ -995,7 +1009,8 @@ void getSomeData(dev, Boolean devpoll = false) {
 		if (powerTable == null || energyTable == null) {
 			log.trace "Querying DB for today's data…"
 			powerTable = []
-			def powerData = [:] //device.statesSince("power", startOfToday, [max: 288])
+			List powerData
+			powerData = [] //device.statesSince("power", startOfToday, [max: 288])
 			if (powerData.size()) {
 /*
 				while ((newValues = [:] //device.statesBetween("power", startOfToday, powerData.last().date, [max: 288])).size()) {
@@ -1009,7 +1024,8 @@ void getSomeData(dev, Boolean devpoll = false) {
 
 
 			energyTable = []
-			def energyData = [:] //device.statesSince("energy", startOfToday, [max: 288])
+			Map energyData
+			energyData = [:] //device.statesSince("energy", startOfToday, [max: 288])
 			if (energyData.size()) {
 /*
 				while ((newValues = [:] //device.statesBetween("energy", startOfToday, energyData.last().date, [max: 288])).size()) {
@@ -1032,7 +1048,7 @@ void getSomeData(dev, Boolean devpoll = false) {
 private cast(value, dataType) {
 	switch(dataType) {
 		case "number":
-			if (value == null) return (Integer) 0
+			if (value == null) return (Integer)0
 			if (value instanceof String) {
 				if (value.isInteger())
 					return value.toInteger()
@@ -1041,11 +1057,12 @@ private cast(value, dataType) {
 				if (value in trueStrings)
 					return (Integer) 1
 			}
-			def result = (Integer) 0
+			def result
+			result = (Integer)0
 			try {
-				result = (Integer) value
-			} catch(all) {
-				result = (Integer) 0
+				result = (Integer)value
+			} catch(ignored) {
+				result = (Integer)0
 			}
 			return result ? result : (Integer) 0
 		case "decimal":
@@ -1061,7 +1078,7 @@ private cast(value, dataType) {
 			def result = (Float) 0
 			try {
 				result = (Float) value
-			} catch(all) {
+			} catch(ignored) {
 			}
 			return result ? result : (Float) 0
 	}
@@ -1088,7 +1105,7 @@ Boolean getAccessToken() {
 }
 
 void enableOauth() {
-	def params = [
+	Map params = [
 			uri: "http://localhost:8080/app/edit/update?_action_update=Update&oauthEnabled=true&id=${app.appTypeId}",
 			headers: ['Content-Type':'text/html;charset=utf-8']
 	]
@@ -1111,8 +1128,9 @@ void resetAppAccessToken() {
 	}
 }
 
-static List addValue(List table, hr, mins, val) {
-	List newTable = table
+static List<List> addValue(List<List> table, hr, mins, val) {
+	List<List> newTable
+	newTable = table
 	if(table?.size() > 2) {
 		def last = table.last()[2]
 		def secondtolast = table[-2][2]
@@ -1125,19 +1143,21 @@ static List addValue(List table, hr, mins, val) {
 }
 
 Integer getStartTime(String tbl1, String tbl2) {
-	Integer startTime = 24
+	Integer startTime
+	startTime = 24
 	LogTrace("tbl1: ${state."tbl1"?.size()} tbl2: ${state."tbl2"?.size()} ")
 	if (state."${tbl1}"?.size()) {
-		startTime = state."${tbl1}".min{it[0].toInteger()}[0].toInteger()
+		startTime = ((List<List>)state."${tbl1}").min{it[0].toInteger()}[0].toInteger()
 	}
 	if (state."${tbl2}"?.size()) {
-		startTime = Math.min(startTime, state."${tbl2}".min{it[0].toInteger()}[0].toInteger())
+		startTime = Math.min(startTime, ((List<List>)state."${tbl2}").min{it[0].toInteger()}[0].toInteger())
 	}
 	return startTime
 }
 
 static String hideWeatherHtml() {
-	def data = """
+	String data
+	data = """
 		<br></br><br></br>
 		<h3 style="font-size: 22px; font-weight: bold; text-align: center; background: #00a1db; color: #f5f5f5;">The Required Weather data is not available yet...</h3>
 		<br></br><h3 style="font-size: 22px; font-weight: bold; text-align: center; background: #00a1db; color: #f5f5f5;">Please refresh this page after a couple minutes...</h3>
@@ -1145,9 +1165,10 @@ static String hideWeatherHtml() {
 //	render contentType: "text/html", data: data, status: 200
 }
 
-def getTimeZone() {
-	def tz = null
-	if(location?.timeZone) { tz = location?.timeZone }
+TimeZone getTimeZone() {
+	TimeZone tz
+	tz = null
+	if(location?.timeZone) { tz = (TimeZone)location?.timeZone }
 	if(!tz) { LogAction("getTimeZone: Hub or Nest TimeZone not found", "warn", true) }
 	return tz
 }
@@ -1158,7 +1179,7 @@ String getDtNow() {
 }
 
 String formatDt(Date dt) {
-	def tf = new SimpleDateFormat("E MMM dd HH:mm:ss z yyyy")
+	SimpleDateFormat tf = new SimpleDateFormat("E MMM dd HH:mm:ss z yyyy")
 	if(getTimeZone()) { tf.setTimeZone(getTimeZone()) }
 	else {
 		LogAction("HE TimeZone is not set; Please open your location and Press Save", "warn", true)
